@@ -3,7 +3,7 @@ from google.genai import types
 from DB import run_query
 
 
-client = genai.Client(api_key="AIzaSyBjDFhGbbAp948PqeaZFZ1YxR5hR4uxpSk")
+client = genai.Client(api_key="api")
 config = types.GenerateContentConfig(tools=[run_query])
 
 def AI(query):
