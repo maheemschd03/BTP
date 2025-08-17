@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HumanDB - AI-powered Database Assistant</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <h1><span class="logo">🤖</span> HumanDB</h1>
+        <p>Your AI-powered Database Assistant</p>
+    </header>
+    <div class="container">
+        <main>
+            <div class="prompt-section">
+                <textarea id="prompt-input" placeholder="e.g., 'Show me all employees in the sales department'" rows="4"></textarea>
+                <button id="submit-button">
+                    <span class="button-text">Run Query</span>
+                    <div class="spinner-border" role="status"></div>
+                </button>
+            </div>
+            <div class="response-section">
+                <div id="response-output">
+                    <p class="placeholder">Your response will appear here...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+    <footer>
+        <p>Powered by Gemini</p>
+    </footer>
+    <script>
+        const submitButton = document.getElementById("submit-button");
+        const promptInput = document.getElementById("prompt-input");
+        const responseOutput = document.getElementById("response-output");
+        const buttonText = submitButton.querySelector(".button-text");
+        const spinner = submitButton.querySelector(".spinner-border");
+
+        function typeWriter(element, text, callback) {
+            let i = 0;
+            element.innerHTML = "";
+            element.classList.add("typing");
+            function type() {
+                if (i < text.length) {
+                    const char = text.charAt(i);
+                    if (char === '\n') {
+                        element.innerHTML += '<br>';
+                    } else {
+                        element.innerHTML += char;
+                    }
+                    i++;
+                    setTimeout(type, 20);
+                } else {
+                    element.classList.remove("typing");
+                    if (callback) callback();
+                }
+            }
+            type();
+        }
+
+        submitButton.addEventListener("click", async () => {
+            const prompt = promptInput.value;
+
+            if (!prompt) {
+                alert("Please enter a prompt.");
+                return;
+            }
+
+            // Start loading
+            buttonText.style.display = "none";
+            spinner.style.display = "block";
+            submitButton.disabled = true;
+            responseOutput.innerHTML = "";
+
+            try {
+                const response = await fetch("/query", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ prompt })
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    responseOutput.innerHTML = `<p class="error">${data.error}</p>`;
+                } else {
+                    const responseElement = document.createElement("p");
+                    responseOutput.appendChild(responseElement);
+                    typeWriter(responseElement, data.response);
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                responseOutput.innerHTML = "<p class=\"error\">An error occurred while fetching the response.</p>";
+            } finally {
+                // End loading
+                buttonText.style.display = "inline";
+                spinner.style.display = "none";
+                submitButton.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
